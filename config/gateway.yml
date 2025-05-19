@@ -1,5 +1,14 @@
 server:
   port: 8765
+logging:
+  level:
+    root: INFO
+    com:
+      netflix:
+        eureka: info
+        discovery: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"
 
 spring:
   application:
@@ -8,6 +17,9 @@ spring:
   #    import: configserver:http://localhost:8888
   cloud:
     gateway:
+      default-filters:
+        - TokenRelay
+        - RemoveRequestHeader=Cookie
       discovery:
         locator:
           enabled: true       # Включаем автоматическое создание маршрутов по именам
@@ -19,30 +31,45 @@ spring:
           uri: lb://issuing-bank
           predicates:
             - Path=/v1/issuing-bank/**
+#          filters:
+#            - RewritePath=/api/v1/issuing-bank/(?<segment>.*), /v1/issuing-bank/${segment}
 
         # Маршрут для SALES-POINT
         - id: sales-point-route
           uri: lb://sales-point
           predicates:
             - Path=/v1/sales-point/**
+#          filters:
+#            - RewritePath=/api/v1/processing-center/(?<segment>.*), /v1/processing-center/${segment}
 
         # Маршрут для PROCESSING-CENTER
         - id: processing-center-route
           uri: lb://processing-center
           predicates:
             - Path=/v1/processing-center/**
+#          filters:
+#            - RewritePath=/api/v1/sales-point/(?<segment>.*), /v1/sales-point/${segment}
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8001/eureka/ # URL, по которому Eureka Client будет обращаться к Eureka Server.
 
-logging:
-  level:
-    root: INFO
-    com:
-      netflix:
-        eureka: info
-        discovery: info
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"
+---
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/edme-realm
+        registration:
+          keycloak:
+            client-id: edme-client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/edme-realm
