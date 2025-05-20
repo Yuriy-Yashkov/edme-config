@@ -66,8 +66,8 @@ spring:
             issuer-uri: http://localhost:8180/realms/edme-realm
         registration:
           keycloak:
-            client-id: edme-client
-            client-secret: secret
+            client-id: gateway-client
+            client-secret: SFlGuX2oiq4ouMHcrLZTt1sqA4GGJlkl
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
       resourceserver:
