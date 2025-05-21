@@ -9,6 +9,8 @@ logging:
         discovery: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/gateway.log
 
 spring:
   application:
@@ -49,15 +51,6 @@ spring:
             - Path=/v1/processing-center/**
 #          filters:
 #            - RewritePath=/api/v1/sales-point/(?<segment>.*), /v1/sales-point/${segment}
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8001/eureka/ # URL, по которому Eureka Client будет обращаться к Eureka Server.
-
----
-
-spring:
   security:
     oauth2:
       client:
@@ -73,3 +66,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8180/realms/edme-realm
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka/ # URL, по которому Eureka Client будет обращаться к Eureka Server.
