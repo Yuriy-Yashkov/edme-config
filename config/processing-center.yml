@@ -1,3 +1,21 @@
+server:
+  port: 8081
+logging:
+  level:
+    root: INFO
+    org:
+      springframework: INFO
+    com:
+      netflix:
+        eureka: off
+        discovery: off
+    io.opentelemetry: DEBUG
+    io.micrometer.tracing: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/processing-center.log
+
 spring:
   application:
     name: processing-center
@@ -21,16 +39,53 @@ spring:
   liquibase:
     change-log: classpath:/db/changelog/master.yaml
     enabled: true
-server:
-  port: 8081
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: card-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable:
+          idempotence: true
+        max:
+          in:
+            flight:
+              requests:
+                per:
+                  connection: 5
+      retries: 10
+    topics:
+      card-transfer-to-issuing: card-created-to-issuing-events-topic
+      card-transfer-to-processing: card-created-to-processing-events-topic
+      key: 1
+
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8001/eureka/  # URL, по которому Eureka Client будет обращаться к Eureka Server.
-logging:
-  level:
-    root: INFO
-    org:
-      springframework: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"
+
+# Jaeger
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+tracing:
+  url: http://localhost:4317
+
+---
+# Keycloak
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/edme-realm
