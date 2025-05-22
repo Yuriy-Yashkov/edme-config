@@ -1,11 +1,23 @@
+server:
+  port: 8083
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka/  # URL, по которому Eureka Client будет обращаться к Eureka Server.
 logging:
   level:
     root: INFO
     org:
       springframework: INFO
       springframework.data.redis.cache: DEBUG
+    com:
+      netflix:
+        eureka: off
+        discovery: off
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/issuing-bank.log
 
 spring:
   application:
@@ -29,7 +41,7 @@ spring:
   liquibase:
     change-log: classpath:/db/changelog/master.yaml
     enabled: true
-
+#Redis
   cache:
     type: redis
   data:
@@ -37,9 +49,35 @@ spring:
       port: 6380
       host: localhost
       lifetime: 1m
-server:
-  port: 8083
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8001/eureka/  # URL, по которому Eureka Client будет обращаться к Eureka Server.
+#Keycloak:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/edme-realm
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: card-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable:
+          idempotence: true
+        max:
+          in:
+            flight:
+              requests:
+                per:
+                  connection: 5
+      retries: 10
+    topics:
+      card-transfer-to-processing: card-created-to-processing-events-topic
+      card-transfer-to-issuing: card-created-to-issuing-events-topic
+      key: 1
